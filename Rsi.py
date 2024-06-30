@@ -4,7 +4,11 @@ import talib as ta
 import time
 
 def fetch_ohlcv(symbol, timeframe='1m', limit=500):
-    exchange = ccxt.binance()
+    exchange = ccxt.binance({
+        'options': {
+            'defaultType': 'future'  # 선물 시장 데이터를 가져오도록 설정
+        }
+    })
     ohlcv = exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
     df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
@@ -29,9 +33,11 @@ def main():
 
         # 최근 RSI_6 값 출력 및 변수에 저장
         recent_rsi_6 = df['RSI_6'].iloc[-1]
-        print("Recent RSI_6:", recent_rsi_6)
+        print(f"Recent RSI_6: {recent_rsi_6:.2f}")
 
         time.sleep(update_interval)
 
 if __name__ == "__main__":
     main()
+
+
