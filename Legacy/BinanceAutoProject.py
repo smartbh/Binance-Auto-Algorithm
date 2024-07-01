@@ -305,21 +305,12 @@ try:
                     record_trade(trades[i - 1], trades[i])
                     result_recorded = True
                     position_open = False
-
+        
+        #포지션이 없을시
         if not is_position_open():
-            #print("포지션없음")
             cancel_all_orders()
 
         time.sleep(0.1)  # 0.1초 대기
 
 except ccxt.BaseError as e:
     print(f"An error occurred: {e}")  # 예외 발생 시 오류 메시지 출력
-    
-    # 시간 동기화 오류가 발생한 경우 처리
-    if 'Timestamp for this request was 1000ms ahead of the server\'s time' in str(e):
-        print("시간 동기화 오류가 발생했습니다. 시계를 동기화하고 프로그램을 재실행합니다.")
-        # 시스템 시간 동기화 (Windows 예제, Linux의 경우 'timedatectl set-ntp true' 등을 사용)
-        subprocess.run(['w32tm', '/resync'], shell=True)
-        # 프로그램 재실행
-        python = sys.executable
-        os.execl(python, python, *sys.argv)

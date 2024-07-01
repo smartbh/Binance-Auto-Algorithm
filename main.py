@@ -1,104 +1,69 @@
-import ccxt
-import talib as ta
-import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+#
+#*------------------- 주 로직이 돌아갈 메인 함수 --------------------*
+#
 
 
-exchange = ccxt.binance()
-symbol = 'BTC/USDT'
-limit = 1500
+import time
+import datetime as dt
+import subprocess
+import sys
+import os
+from exchange_utils import initialize_binance, fetch_balance, fetch_ticker, cancel_all_orders
+from trading_utils import cal_amount, is_position_open, binance_long
+from volume_utils import fetch_volume_data
+from record_utils import read_last_csv_entry, record_trade, initialize_csv
+from RsiNew import get_recent_rsi
 
+print('Binance Automatic Futures trade Processing working....')
 
-candle = exchange.fetch_ohlcv(symbol=symbol, limit=limit)
+with open("api.txt") as api_file:
+    lines = api_file.readlines()
+    api_key = lines[0].strip()
+    secret = lines[1].strip()
 
-df = pd.DataFrame(candle, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
-df['datetime'] = pd.to_datetime(df['datetime'], unit='ms')
+def run():
+    binance = initialize_binance(api_key, secret)
+    symbol = "BTC/USDT"
+    leverage = 75
+    volume_list = []
+    position_open = False
+    result_recorded = False
+    if read_last_csv_entry() is None:
+        initialize_csv(binance, symbol)
+    while True:
+        balance = fetch_balance(binance)
+        usdt = balance['total']['USDT']
+        ticker = fetch_ticker(binance, symbol)
+        cur_price = ticker
+        daytime = dt.datetime.now()
+        recent_rsi_6 = get_recent_rsi(symbol)
+        if 21 <= daytime.hour < 22:
+            sl_multiplier = 0.15
+            tp_multiplier = 0.23
+            rsi_threshold = 7
+        else:
+            sl_multiplier = 0.15
+            tp_multiplier = 0.3
+            rsi_threshold = 4
+        if (recent_rsi_6 <= rsi_threshold and not is_position_open(binance, symbol) and not position_open and fetch_volume_data(binance, symbol, volume_list)):
+            cancel_all_orders(binance, symbol)
+            print(f" 포지션 돌입시점 RSI : {recent_rsi_6:.2f}, 돌입 가격 : {cur_price}")
+            binance_long(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list)
+            result_recorded = False
+            position_open = True
+        if position_open and not is_position_open(binance, symbol) and not result_recorded:
+            trades = binance.fetch_my_trades(symbol, since=None, limit=4)
+            for i in range(len(trades) - 1, 0, -1):
+                if trades[i]['side'] == 'sell' and trades[i - 1]['side'] == 'buy' and trades[i]['order'] != trades[i - 1]['order']:
+                    record_trade(binance, symbol, trades[i - 1], trades[i], 0, 0)
+                    result_recorded = True
+                    position_open = False
+        if not is_position_open(binance, symbol):
+            cancel_all_orders(binance, symbol)
+        time.sleep(0.1)
 
-
-def calc_rsi(close, period):
-    delta = close.diff()
-    ups, downs = delta.copy(), delta.copy()
-    ups[ups < 0] = 0
-    downs[downs > 0] = 0
-
-    au = ups.ewm(com=(period-1), min_periods=period).mean()
-    ad = downs.abs().ewm(com=(period-1), min_periods=period).mean()
-
-    rs = au / ad
-    rsi = pd.Series(100 - (100 / (1 + rs)))
-
-    return rsi
-
-
-df['ta_rsi_6'] = ta.RSI(df['close'], timeperiod=6)
-df['ta_rsi_12'] = ta.RSI(df['close'], timeperiod=12)
-df['ta_rsi_24'] = ta.RSI(df['close'], timeperiod=24)
-df['calc_rsi_6'] = calc_rsi(df['close'], period=6)
-
-# print(round(df['ta_rsi_6'], 3))
-
-
-fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=.01, row_heights=[0.4, 0.1, 0.1])
-
-fig.add_trace(go.Candlestick(x=df['datetime'],
-                             open=df['open'],
-                             high=df['high'],
-                             low=df['low'],
-                             close=df['close'],
-                             name='candle'))
-
-color = ['blue' if row['open'] - row['close'] >= 0 else 'red' for index, row in df.iterrows()]
-fig.add_trace(go.Bar(x=df['datetime'],
-                     y=df['volume'],
-                     marker_color=color,
-                     name='volume'
-                     ),
-              row=2, col=1)
-
-fig.add_trace(go.Scatter(x=df['datetime'],
-                         y=df['ta_rsi_6'],
-                         name='rsi_6'
-                         ),
-              row=3, col=1)
-
-fig.add_trace(go.Scatter(x=df['datetime'],
-                         y=df['ta_rsi_12'],
-                         name='rsi_12'
-                         ),
-              row=3, col=1)
-
-fig.add_trace(go.Scatter(x=df['datetime'],
-                         y=df['ta_rsi_24'],
-                         name='rsi_24'
-                         ),
-              row=3, col=1)
-
-fig.add_annotation(x=df['datetime'][500],
-                   y=df['close'][500],
-                   text='point',
-                   showarrow=True,
-                   arrowhead=1,
-                   row=1, col=1)
-
-fig.update_layout(
-    xaxis_rangeslider_visible=False,
-    hovermode='x unified',
-)
-fig.update_yaxes(title_text='Price', row=1, col=1)
-fig.update_yaxes(title_text='Volume', row=2, col=1)
-fig.update_yaxes(title_text='RSI', row=3, col=1)
-fig.show()
-
-
-# print(df.loc['2024-02-12 10:07:00'])
-# margin_candle = exchange.fetch_ohlcv(symbol=symbol, limit=10)
-# target_value = 7
-# target_column = 'Y'
-
-# 해당 조건을 만족하는 행의 인덱스를 가져오기
-# index_of_target_value = df[df[target_column] == target_value].index[0]
-
-# print(f"좌표 ({df.loc[index_of_target_value, 'X']}, {df.loc[index_of_target_value, 'Y']})의 인덱스: {index_of_target_value}")
-
-# print(margin_candle)
+if __name__ == "__main__":
+    try:
+        run()
+    except ccxt.BaseError as e:
+        print(f"An error occurred: {e}")

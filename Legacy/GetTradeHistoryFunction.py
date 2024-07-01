@@ -8,6 +8,7 @@ import sys
 import pandas as pd
 import numpy as np
 from BinanceFuturesPositionHistory import BinanceFuturesAPI
+from RsiNew import get_recent_rsi
 
 # api.txt 파일에서 API 키와 비밀 키를 읽어옴
 with open("api.txt") as api_file:
@@ -90,29 +91,38 @@ def fetch_volume_data(symbol):
             # SMA 9 계산
             if len(volume_list) == 9:
                 sma_9 = np.mean(volume_list)
+            #else:
+                #sma_9 = np.mean(volume_list)  # 거래량 리스트의 평균으로 계산
 
             volume_1_min_ago = df['volume'].iloc[-2]
             volume_2_min_ago = df['volume'].iloc[-3]
             volume_3_min_ago = df['volume'].iloc[-4]
 
+            # 거래량 출력
+            #print(f"현재 거래량(SMA 9 기준): {current_volume}")
+            #print(f"1분 전 거래량: {volume_1_min_ago}")
+            #print(f"2분 전 거래량: {volume_2_min_ago}")
+            #print(f"3분 전 거래량: {volume_3_min_ago}")
+            #print(f"3분 전 거래량들 평균 : {(volume_1_min_ago + volume_2_min_ago + volume_3_min_ago)/3}")
+
             now = dt.datetime.now()
+            recent_rsi_6 = get_recent_rsi(symbol, limit=500)  # 최근 RSI 값 가져오기
+            rsi_threshold = 4
             
-            # 조건 충족 및 출력 관리
-            if (current_volume > 1.5 * (volume_1_min_ago + volume_2_min_ago + volume_3_min_ago) / 3 and
-                (last_print_time is None or (now - last_print_time).total_seconds() >= print_interval)):
-                
-                print(f"거래량 조건 충족, 시간 : {now}")
+            if current_volume > 1.5 * (volume_1_min_ago + volume_2_min_ago + volume_3_min_ago)/3 and recent_rsi_6 <= rsi_threshold:
+                print(f"현재 RSI 6 : {recent_rsi_6}")
+                print(f"거래량 조건 충족, 시간 : {now}", end="\n")
                 print(f"현재 거래량(SMA 9 기준): {current_volume}")
                 print(f"1분 전 거래량: {volume_1_min_ago}")
                 print(f"2분 전 거래량: {volume_2_min_ago}")
                 print(f"3분 전 거래량: {volume_3_min_ago}")
-                print(f"3분 전 거래량들 평균 * 1.5 : {(volume_1_min_ago + volume_2_min_ago + volume_3_min_ago) / 3 * 1.5}")
+                print(f"3분 전 거래량들 평균 * 1.5 : {(volume_1_min_ago + volume_2_min_ago + volume_3_min_ago)/3*1.5}")
+                return true
 
-                last_print_time = now  # 마지막 출력 시간 업데이트
 
             # 1초 대기 후 다시 실행
-            time.sleep(1)
-            
+            time.sleep(0.1)
+
         except Exception as e:
             print(f"오류 발생: {e}")
             time.sleep(5)  # 오류 발생 시 5초 대기 후 재시도
