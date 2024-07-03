@@ -5,6 +5,7 @@
 
 import math  # 수학적 계산을 수행하기 위해 math 라이브러리를 가져옴
 import ccxt  # ccxt 라이브러리를 가져와 거래소 API를 사용
+from exchange_utils import fetch_ticker, fetch_balance, cancel_all_orders
 
 def cal_amount(usdt_balance, cur_price, leverage):
     portion = 0.95  # 잔고의 95%를 거래에 사용

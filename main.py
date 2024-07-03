@@ -8,6 +8,7 @@ import datetime as dt
 import subprocess
 import sys
 import os
+import ccxt
 from exchange_utils import initialize_binance, fetch_balance, fetch_ticker, cancel_all_orders
 from trading_utils import cal_amount, is_position_open, binance_long
 from volume_utils import fetch_volume_data
@@ -37,20 +38,34 @@ def run():
         cur_price = ticker
         daytime = dt.datetime.now()
         recent_rsi_6 = get_recent_rsi(symbol)
+
+        """
         if 21 <= daytime.hour < 22:
             sl_multiplier = 0.15
             tp_multiplier = 0.23
             rsi_threshold = 7
         else:
-            sl_multiplier = 0.15
-            tp_multiplier = 0.3
-            rsi_threshold = 4
-        if (recent_rsi_6 <= rsi_threshold and not is_position_open(binance, symbol) and not position_open and fetch_volume_data(binance, symbol, volume_list)):
+        """
+        sl_multiplier = 0.15
+        tp_multiplier = 0.3
+        rsi_threshold = 4
+
+        #RSI가 4이하 이고
+        #포지션이 열려있지 않고(is_position_open)
+        #position_open 변수가 false이고
+        #거래량 데이터가 조건을 충족할때
+        #롱 포지션을 잡는다.
+        if (recent_rsi_6 <= rsi_threshold and
+            not is_position_open(binance, symbol) and
+            not position_open and
+            fetch_volume_data(binance, symbol, volume_list)):
             cancel_all_orders(binance, symbol)
             print(f" 포지션 돌입시점 RSI : {recent_rsi_6:.2f}, 돌입 가격 : {cur_price}")
             binance_long(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list)
             result_recorded = False
             position_open = True
+
+        #내용들이 정리 되면 거래 내역을 
         if position_open and not is_position_open(binance, symbol) and not result_recorded:
             trades = binance.fetch_my_trades(symbol, since=None, limit=4)
             for i in range(len(trades) - 1, 0, -1):
@@ -58,6 +73,7 @@ def run():
                     record_trade(binance, symbol, trades[i - 1], trades[i], 0, 0)
                     result_recorded = True
                     position_open = False
+                    
         if not is_position_open(binance, symbol):
             cancel_all_orders(binance, symbol)
         time.sleep(0.1)
