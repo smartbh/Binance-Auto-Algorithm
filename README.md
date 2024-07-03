@@ -2,8 +2,10 @@
  Making Auto trade Binance Future by api and websocket api
 
 
-*---------------------------------------------*
+*///---------------------------------------------///*
+
 Needs
+
 api.txt (from Binance api hompage)
 
 in api.txt file (just need two lines)
@@ -53,8 +55,10 @@ folders)
  
  ㄴvolume_utils.py
 
-*---------------------------------------------*
+*///---------------------------------------------///*
+
 필요항목
+
 api.txt (바이낸스 홈페이지에서 api 신청후 받아서 메모장에 저장)
 
 api.txt 파일안에 문자열 단 두줄만 필요
