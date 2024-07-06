@@ -2,9 +2,9 @@
 ## Making Auto trade Binance Future by api and websocket api
 
 
-#*///---------------------------------------------///*
+# *///---------------------------------------------///*
 
-#Needs
+# Needs
 
 api.txt (from Binance api hompage)
 
@@ -55,9 +55,9 @@ folders)
  
  ㄴvolume_utils.py
 
-#*///---------------------------------------------///*
+# *///---------------------------------------------///*
 
-#필요항목
+# 필요항목
 
 api.txt (바이낸스 홈페이지에서 api 신청후 받아서 메모장에 저장)
 
@@ -107,9 +107,9 @@ folders)
  
  ㄴvolume_utils.py
 
- *///---------------------------------------------///*
+ # *///---------------------------------------------///*
 
- #Result | 결과
+ # Result | 결과
  
 ﻿Start Seed,Entry Price,Exit Price,Profit/Loss,Fee,Net Profit,Finish Seed,Entry Time,Exit Time,Result,Leverage,승률
 50.89671569,67672.8,67651.4,-1.284,,,49.61271569,06-01-24 16:18,06-01-24 16:25,패,75,0.6
