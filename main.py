@@ -1,8 +1,3 @@
-#
-#*------------------- 주 로직이 돌아갈 메인 함수 --------------------*
-#
-
-
 import time
 import datetime as dt
 import subprocess
@@ -29,23 +24,19 @@ def run():
     volume_list = []
     position_open = False
     result_recorded = False
+    startSeed = 0.0
+    
     if read_last_csv_entry() is None:
         initialize_csv(binance, symbol)
+        
     while True:
         balance = fetch_balance(binance)
-        usdt = balance['total']['USDT']
+        usdt = balance['total']['USDT'] #계좌 잔고를 받아오는 코드
         ticker = fetch_ticker(binance, symbol)
         cur_price = ticker
         daytime = dt.datetime.now()
         recent_rsi_6 = get_recent_rsi(symbol)
 
-        """
-        if 21 <= daytime.hour < 22:
-            sl_multiplier = 0.15
-            tp_multiplier = 0.23
-            rsi_threshold = 7
-        else:
-        """
         sl_multiplier = 0.15
         tp_multiplier = 0.3
         rsi_threshold = 4
@@ -55,22 +46,24 @@ def run():
         #position_open 변수가 false이고
         #거래량 데이터가 조건을 충족할때
         #롱 포지션을 잡는다.
+        #start seed를 롱 잡을때 미리 저장하고 record_trade 함수에 넣어준다.
         if (recent_rsi_6 <= rsi_threshold and
             not is_position_open(binance, symbol) and
             not position_open and
             fetch_volume_data(binance, symbol, volume_list)):
             cancel_all_orders(binance, symbol)
             print(f" 포지션 돌입시점 RSI : {recent_rsi_6:.2f}, 돌입 가격 : {cur_price}")
+            startSeed = usdt
             binance_long(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list)
             result_recorded = False
             position_open = True
 
         #내용들이 정리 되면 거래 내역을 
         if position_open and not is_position_open(binance, symbol) and not result_recorded:
-            trades = binance.fetch_my_trades(symbol, since=None, limit=4)
+            trades = binance.fetch_my_trades(symbol, since=None, limit=2) #가장 최근 거래 기록 2개(buy,sell 한쌍) 가져오기
             for i in range(len(trades) - 1, 0, -1):
                 if trades[i]['side'] == 'sell' and trades[i - 1]['side'] == 'buy' and trades[i]['order'] != trades[i - 1]['order']:
-                    record_trade(binance, symbol, trades[i - 1], trades[i], 0, 0)
+                    record_trade(binance, symbol, trades[i - 1], trades[i], startSeed, 0)
                     result_recorded = True
                     position_open = False
                     
