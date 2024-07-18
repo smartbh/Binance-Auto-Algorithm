@@ -76,3 +76,6 @@ if __name__ == "__main__":
         run()
     except ccxt.BaseError as e:
         print(f"An error occurred: {e}")
+    except Exception as e:
+      #그 외 모든 예외처리
+        print(f"An error occurred: {e}")
