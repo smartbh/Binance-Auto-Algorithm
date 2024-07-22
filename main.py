@@ -24,7 +24,7 @@ def run():
     volume_list = []
     position_open = False
     result_recorded = False
-    startSeed = 0.0
+    startSeed = 0
     
     if read_last_csv_entry() is None:
         initialize_csv(binance, symbol)
@@ -79,3 +79,4 @@ if __name__ == "__main__":
     except Exception as e:
       #그 외 모든 예외처리
         print(f"An error occurred: {e}")
+        traceback.print_exc()  # 예외 발생 시 스택 트레이스 출력
