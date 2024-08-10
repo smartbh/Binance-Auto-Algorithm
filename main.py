@@ -4,6 +4,7 @@ import subprocess
 import sys
 import os
 import ccxt
+import traceback
 from exchange_utils import initialize_binance, fetch_balance, fetch_ticker, cancel_all_orders
 from trading_utils import cal_amount, is_position_open, binance_long
 from volume_utils import fetch_volume_data
@@ -54,6 +55,8 @@ def run():
             cancel_all_orders(binance, symbol)
             print(f" 포지션 돌입시점 RSI : {recent_rsi_6:.2f}, 돌입 가격 : {cur_price}")
             startSeed = usdt
+            print(f"startSeed: {usdt}, type: {type(usdt)}")  # usdt 디버깅 정보 출력
+            print(f"startSeed: {startSeed}, type: {type(startSeed)}")  # startSeed 디버깅 정보 출력
             binance_long(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list)
             result_recorded = False
             position_open = True
@@ -63,6 +66,7 @@ def run():
             trades = binance.fetch_my_trades(symbol, since=None, limit=2) #가장 최근 거래 기록 2개(buy,sell 한쌍) 가져오기
             for i in range(len(trades) - 1, 0, -1):
                 if trades[i]['side'] == 'sell' and trades[i - 1]['side'] == 'buy' and trades[i]['order'] != trades[i - 1]['order']:
+                    print(f"Recording trade with startSeed: {startSeed}, type: {type(startSeed)}")  # startSeed 디버깅 정보 출력
                     record_trade(binance, symbol, trades[i - 1], trades[i], startSeed, 0)
                     result_recorded = True
                     position_open = False
@@ -75,8 +79,8 @@ if __name__ == "__main__":
     try:
         run()
     except ccxt.BaseError as e:
-        print(f"An error occurred: {e}")
+        print(f"An Binance error occurred: {e}")
     except Exception as e:
       #그 외 모든 예외처리
-        print(f"An error occurred: {e}")
-        traceback.print_exc()  # 예외 발생 시 스택 트레이스 출력
+        print(f"An Code error occurred: {e}")
+        print(traceback.print_exc())  # 예외 발생 시 스택 트레이스 출력
