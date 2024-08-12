@@ -17,8 +17,12 @@ def is_position_open(exchange, symbol):
     balance = exchange.fetch_balance()  # 잔고 정보 가져오기
     positions = balance['info']['positions']  # 포지션 정보 가져오기
     btc_positions = [position for position in positions if position['symbol'] == symbol.replace('/', '')]  # 해당 심볼의 포지션 필터링
+    print(f"btc_positions : {btc_positions}")
     position = btc_positions[0] if btc_positions else None  # 첫 번째 포지션 선택
+    print(f"position : {position}")
     initial_margin = float(position['initialMargin']) if position else 0  # 초기 마진 값 가져오기
+    print(f"initial_margin : {initial_margin}")
+    print(f"initial_margin : {initial_margin != 0}")
     return initial_margin != 0  # 초기 마진 값이 0이 아니면 포지션이 열려있다고 간주
 
 def fetch_entry_price(exchange, symbol):

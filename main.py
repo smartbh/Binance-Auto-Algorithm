@@ -55,18 +55,15 @@ def run():
             cancel_all_orders(binance, symbol)
             print(f" 포지션 돌입시점 RSI : {recent_rsi_6:.2f}, 돌입 가격 : {cur_price}")
             startSeed = usdt
-            print(f"startSeed: {usdt}, type: {type(usdt)}")  # usdt 디버깅 정보 출력
-            print(f"startSeed: {startSeed}, type: {type(startSeed)}")  # startSeed 디버깅 정보 출력
             binance_long(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list)
             result_recorded = False
             position_open = True
 
         #내용들이 정리 되면 거래 내역을 
         if position_open and not is_position_open(binance, symbol) and not result_recorded:
-            trades = binance.fetch_my_trades(symbol, since=None, limit=2) #가장 최근 거래 기록 2개(buy,sell 한쌍) 가져오기
+            trades = binance.fetch_my_trades(symbol, since=None, limit=20) #가장 최근 거래 기록 2개(buy,sell 한쌍) 가져오기
             for i in range(len(trades) - 1, 0, -1):
                 if trades[i]['side'] == 'sell' and trades[i - 1]['side'] == 'buy' and trades[i]['order'] != trades[i - 1]['order']:
-                    print(f"Recording trade with startSeed: {startSeed}, type: {type(startSeed)}")  # startSeed 디버깅 정보 출력
                     record_trade(binance, symbol, trades[i - 1], trades[i], startSeed, 0)
                     result_recorded = True
                     position_open = False
