@@ -27,6 +27,12 @@ def run():
     result_recorded = False
     startSeed = 0
     
+    fee_rate = 0.0005 # taker 수수료율
+    
+    sl_multiplier = 0.15 #손절 15%라인
+    tp_multiplier = 0.3 #수익 30#라인
+    rsi_threshold = 4
+    
     if read_last_csv_entry() is None:
         initialize_csv(binance, symbol)
         
@@ -38,9 +44,6 @@ def run():
         daytime = dt.datetime.now()
         recent_rsi_6 = get_recent_rsi(symbol)
 
-        sl_multiplier = 0.15
-        tp_multiplier = 0.3
-        rsi_threshold = 4
 
         #RSI가 4이하 이고
         #포지션이 열려있지 않고(is_position_open)
@@ -55,7 +58,8 @@ def run():
             cancel_all_orders(binance, symbol)
             print(f" 포지션 돌입시점 RSI : {recent_rsi_6:.2f}, 돌입 가격 : {cur_price}")
             startSeed = usdt
-            binance_long(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list)
+            #binance_long(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list)
+            binance_long_with_max_margin(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list, fee_rate)  # fee_rate를 추가로 전달
             result_recorded = False
             position_open = True
 
