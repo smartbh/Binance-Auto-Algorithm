@@ -6,7 +6,7 @@ import os
 import ccxt
 import traceback
 from exchange_utils import initialize_binance, fetch_balance, fetch_ticker, cancel_all_orders
-from trading_utils import cal_amount, is_position_open, binance_long
+from trading_utils import cal_amount, is_position_open, binance_long, binance_long_with_max_margin, calculate_position_size
 from volume_utils import fetch_volume_data
 from record_utils import read_last_csv_entry, record_trade, initialize_csv
 from RsiNew import get_recent_rsi
@@ -59,7 +59,7 @@ def run():
             print(f" 포지션 돌입시점 RSI : {recent_rsi_6:.2f}, 돌입 가격 : {cur_price}")
             startSeed = usdt
             #binance_long(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list)
-            binance_long_with_max_margin(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list, fee_rate)  # fee_rate를 추가로 전달
+            binance_long_with_max_margin(binance, symbol, sl_multiplier, tp_multiplier, leverage, fee_rate)  # fee_rate를 추가로 전달
             result_recorded = False
             position_open = True
 

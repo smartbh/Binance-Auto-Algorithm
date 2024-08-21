@@ -43,7 +43,7 @@ def set_stop_loss_take_profit(exchange, symbol, amount, sl_price, tp_price):
     exchange.create_order(symbol=symbol, type='STOP_MARKET', side='sell', amount=amount, params={'stopPrice': sl_price})  # 스탑 로스 설정
     exchange.create_order(symbol=symbol, type='TAKE_PROFIT_MARKET', side='sell', amount=amount, params={'stopPrice': tp_price})  # 타겟 프로핏 설정
 
-def binance_long(exchange, symbol, sl, tp, leverage, volume_list):
+def binance_long(exchange, symbol, sl, tp, leverage):
     cur_price = fetch_ticker(exchange, symbol)  # 현재 가격 가져오기
     cancel_all_orders(exchange, symbol)  # 모든 주문 취소
     balance = fetch_balance(exchange)  # 잔고 정보 가져오기
