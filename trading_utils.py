@@ -17,7 +17,20 @@ def cal_amount(usdt_balance, cur_price, leverage):
 def calculate_position_size(usdt_balance, cur_price, leverage, fee_rate):
     portion = 1.0  # 잔고의 100% 사용
     usdt_trade = usdt_balance * portion  # 거래할 USDT 양 계산
-    amount = math.floor((usdt_trade / cur_price) * leverage / (1 + fee_rate))  # 거래량 계산
+    print(f"usdt_balance 수량 : {usdt_balance}")
+    print(f"usdt_trade 수량 : {usdt_trade}")
+    
+    # 포지션 크기 계산
+    amount = (usdt_trade / cur_price) * leverage / (1 + fee_rate)
+    amount = math.floor(amount * 1000) / 1000  # BTC의 경우 소수점 셋째 자리로 내림
+    print(f"계산된 거래량(수수료 포함): {amount}")
+    
+    # 최소 거래량 체크
+    min_btc_trade_size = 0.001
+    if amount < min_btc_trade_size:
+        print(f"계산된 거래량 {amount}이 최소 거래량 {min_btc_trade_size} BTC보다 작습니다.")
+        raise ValueError(f"계산된 거래량 {amount}이 최소 거래량 {min_btc_trade_size} BTC보다 작습니다.")
+    
     return amount
 
 def is_position_open(exchange, symbol):
@@ -56,6 +69,7 @@ def binance_long(exchange, symbol, sl, tp, leverage):
     set_stop_loss_take_profit(exchange, symbol, amount, sl_price, tp_price)  # 스탑 로스와 타겟 프로핏 설정
 
 
+'''
 #수수료 반영된 수량 포지션 잡는 함수
 def binance_long_with_max_margin(exchange, symbol, sl, tp, leverage, fee_rate):
     cur_price = exchange.fetch_ticker(symbol)['last']  # 현재 가격 가져오기
@@ -72,3 +86,23 @@ def binance_long_with_max_margin(exchange, symbol, sl, tp, leverage, fee_rate):
     sl_price = round(cur_price * (1 - sl / leverage), 2)
     tp_price = round(cur_price * (1 + tp / leverage), 2)
     set_stop_loss_take_profit(exchange, symbol, amount, sl_price, tp_price)
+''' 
+
+def binance_long_with_max_margin(exchange, symbol, sl, tp, leverage, fee_rate):
+    cur_price = exchange.fetch_ticker(symbol)['last']  # 현재 가격 가져오기
+    balance = exchange.fetch_balance(params={"type": "future"})  # 선물 잔고 가져오기
+    usdt = balance['total']['USDT']
+
+    # 수수료를 반영한 포지션 크기 계산
+    Amount = calculate_position_size(usdt, cur_price, leverage, fee_rate)
+    
+    try:
+        # 시장가 주문 생성
+        exchange.create_market_buy_order(symbol=symbol, amount=Amount)
+
+        # 스탑로스와 타겟 프로핏 설정
+        sl_price = round(cur_price * (1 - sl / leverage), 2)
+        tp_price = round(cur_price * (1 + tp / leverage), 2)
+        set_stop_loss_take_profit(exchange, symbol, amount, sl_price, tp_price)
+    except Exception as e:
+        print(f"거래 생성 중 오류 발생: {e}")
