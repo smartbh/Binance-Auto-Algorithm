@@ -37,12 +37,8 @@ def is_position_open(exchange, symbol):
     balance = exchange.fetch_balance()  # 잔고 정보 가져오기
     positions = balance['info']['positions']  # 포지션 정보 가져오기
     btc_positions = [position for position in positions if position['symbol'] == symbol.replace('/', '')]  # 해당 심볼의 포지션 필터링
-    print(f"btc_positions : {btc_positions}")
     position = btc_positions[0] if btc_positions else None  # 첫 번째 포지션 선택
-    print(f"position : {position}")
     initial_margin = float(position['initialMargin']) if position else 0  # 초기 마진 값 가져오기
-    print(f"initial_margin : {initial_margin}")
-    print(f"initial_margin : {initial_margin != 0}")
     return initial_margin != 0  # 초기 마진 값이 0이 아니면 포지션이 열려있다고 간주
 
 def fetch_entry_price(exchange, symbol):
@@ -68,26 +64,6 @@ def binance_long(exchange, symbol, sl, tp, leverage):
     tp_price = round(entry_price * (1 + tp / leverage), 2)  # 타겟 프로핏 가격 계산
     set_stop_loss_take_profit(exchange, symbol, amount, sl_price, tp_price)  # 스탑 로스와 타겟 프로핏 설정
 
-
-'''
-#수수료 반영된 수량 포지션 잡는 함수
-def binance_long_with_max_margin(exchange, symbol, sl, tp, leverage, fee_rate):
-    cur_price = exchange.fetch_ticker(symbol)['last']  # 현재 가격 가져오기
-    balance = exchange.fetch_balance(params={"type": "future"})  # 선물 잔고 가져오기
-    usdt = balance['total']['USDT']
-
-    # **포지션 크기 계산 시 수수료 반영**
-    amount = calculate_position_size(usdt, cur_price, leverage, fee_rate)
-
-    # 시장가 주문 생성
-    exchange.create_market_buy_order(symbol=symbol, amount=amount)
-
-    # 스탑로스와 타겟 프로핏 설정
-    sl_price = round(cur_price * (1 - sl / leverage), 2)
-    tp_price = round(cur_price * (1 + tp / leverage), 2)
-    set_stop_loss_take_profit(exchange, symbol, amount, sl_price, tp_price)
-''' 
-
 def binance_long_with_max_margin(exchange, symbol, sl, tp, leverage, fee_rate):
     cur_price = exchange.fetch_ticker(symbol)['last']  # 현재 가격 가져오기
     balance = exchange.fetch_balance(params={"type": "future"})  # 선물 잔고 가져오기
@@ -103,6 +79,6 @@ def binance_long_with_max_margin(exchange, symbol, sl, tp, leverage, fee_rate):
         # 스탑로스와 타겟 프로핏 설정
         sl_price = round(cur_price * (1 - sl / leverage), 2)
         tp_price = round(cur_price * (1 + tp / leverage), 2)
-        set_stop_loss_take_profit(exchange, symbol, amount, sl_price, tp_price)
+        set_stop_loss_take_profit(exchange, symbol, Amount, sl_price, tp_price)
     except Exception as e:
         print(f"거래 생성 중 오류 발생: {e}")

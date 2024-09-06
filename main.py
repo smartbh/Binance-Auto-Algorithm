@@ -11,7 +11,7 @@ from volume_utils import fetch_volume_data
 from record_utils import read_last_csv_entry, record_trade, initialize_csv
 from RsiNew import get_recent_rsi
 
-print('Binance Automatic Futures trade Processing working....')
+
 
 with open("api.txt") as api_file:
     lines = api_file.readlines()
@@ -19,6 +19,7 @@ with open("api.txt") as api_file:
     secret = lines[1].strip()
 
 def run():
+    print('Binance Automatic Futures trade Processing working....')
     binance = initialize_binance(api_key, secret)
     symbol = "BTC/USDT"
     leverage = 75
@@ -30,7 +31,7 @@ def run():
     fee_rate = 0.0005 # taker 수수료율
     
     sl_multiplier = 0.15 #손절 15%라인
-    tp_multiplier = 0.3 #수익 30#라인
+    tp_multiplier = 0.2 #수익 20%라인
     rsi_threshold = 4
     
     if read_last_csv_entry() is None:
@@ -63,25 +64,35 @@ def run():
             result_recorded = False
             position_open = True
 
+
+
         #내용들이 정리 되면 거래 내역을 
         if position_open and not is_position_open(binance, symbol) and not result_recorded:
             trades = binance.fetch_my_trades(symbol, since=None, limit=20) #가장 최근 거래 기록 2개(buy,sell 한쌍) 가져오기
+            
             for i in range(len(trades) - 1, 0, -1):
                 if trades[i]['side'] == 'sell' and trades[i - 1]['side'] == 'buy' and trades[i]['order'] != trades[i - 1]['order']:
                     record_trade(binance, symbol, trades[i - 1], trades[i], startSeed, 0)
-                    result_recorded = True
-                    position_open = False
+                    
+            result_recorded = True
+            position_open = False
+        
+        
                     
         if not is_position_open(binance, symbol):
             cancel_all_orders(binance, symbol)
         time.sleep(0.1)
+
+
 
 if __name__ == "__main__":
     try:
         run()
     except ccxt.BaseError as e:
         print(f"An Binance error occurred: {e}")
+        run()
     except Exception as e:
       #그 외 모든 예외처리
         print(f"An Code error occurred: {e}")
         print(traceback.print_exc())  # 예외 발생 시 스택 트레이스 출력
+        run()
