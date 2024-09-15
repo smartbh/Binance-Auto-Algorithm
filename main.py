@@ -31,20 +31,14 @@ def run():
     fee_rate = 0.0005 # taker 수수료율
     
     sl_multiplier = 0.15 #손절 15%라인
-    tp_multiplier = 0.2 #수익 20%라인
-    rsi_threshold = 4
+    tp_multiplier = 0.25 #수익 25%라인
+    rsi_threshold = 4 #포지션 잡을 RSI 기준값
     
     if read_last_csv_entry() is None:
         initialize_csv(binance, symbol)
-        
+    
     while True:
-        balance = fetch_balance(binance)
-        usdt = balance['total']['USDT'] #계좌 잔고를 받아오는 코드
-        ticker = fetch_ticker(binance, symbol)
-        cur_price = ticker
-        daytime = dt.datetime.now()
         recent_rsi_6 = get_recent_rsi(symbol)
-
 
         #RSI가 4이하 이고
         #포지션이 열려있지 않고(is_position_open)
@@ -52,14 +46,21 @@ def run():
         #거래량 데이터가 조건을 충족할때
         #롱 포지션을 잡는다.
         #start seed를 롱 잡을때 미리 저장하고 record_trade 함수에 넣어준다.
+        #기존에는 바깥에 있던 balance와 ticker 코드를 조건문 안으로 넣음으로써 이유도 없이 fetch를 계속 요청하지 않게 최적화
         if (recent_rsi_6 <= rsi_threshold and
             not is_position_open(binance, symbol) and
             not position_open and
             fetch_volume_data(binance, symbol, volume_list)):
-            cancel_all_orders(binance, symbol)
-            print(f" 포지션 돌입시점 RSI : {recent_rsi_6:.2f}, 돌입 가격 : {cur_price}")
+            cancel_all_orders(binance, symbol) #혹시 모를 예시 open order들 전부 취소
+            
+            balance = fetch_balance(binance) # 계좌 데이터 받아오기
+            usdt = balance['total']['USDT'] #계좌 잔고를 받아오는 코드
+            ticker = fetch_ticker(binance, symbol)
+            cur_price = ticker
+            daytime = dt.datetime.now()
+            
+            print(f" 포지션 돌입시점 RSI : {recent_rsi_6:.2f}, 돌입 가격 : {cur_price} 돌입 시간 : {daytime}")
             startSeed = usdt
-            #binance_long(binance, symbol, sl_multiplier, tp_multiplier, leverage, volume_list)
             binance_long_with_max_margin(binance, symbol, sl_multiplier, tp_multiplier, leverage, fee_rate)  # fee_rate를 추가로 전달
             result_recorded = False
             position_open = True

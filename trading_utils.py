@@ -15,7 +15,7 @@ def cal_amount(usdt_balance, cur_price, leverage):
     
 #수수료 반영된 포지션 사이즈 계산 함수
 def calculate_position_size(usdt_balance, cur_price, leverage, fee_rate):
-    portion = 1.0  # 잔고의 100% 사용
+    portion = 0.95  # 잔고의 95% 사용수수료에 의한 거래 실패 방지
     usdt_trade = usdt_balance * portion  # 거래할 USDT 양 계산
     print(f"usdt_balance 수량 : {usdt_balance}")
     print(f"usdt_trade 수량 : {usdt_trade}")
