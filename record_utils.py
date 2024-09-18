@@ -5,6 +5,7 @@
 import csv  # CSV 파일 작업을 위해 csv 라이브러리를 가져옴
 import datetime as dt  # 날짜 및 시간 작업을 위해 datetime 라이브러리를 dt로 가져옴
 
+#csv 파일 내용을 읽는 함수
 def read_last_csv_entry(filename='binance.csv'):
     try:
         with open(filename, 'r', encoding='utf-8-sig') as f:
@@ -15,6 +16,7 @@ def read_last_csv_entry(filename='binance.csv'):
     except (IndexError, FileNotFoundError):
         return None
 
+#데이터를 기록하는 함수
 def record_trade(exchange, symbol, buy_trade, sell_trade, start_seed, finish_seed):
     entry_price = float(buy_trade['price'])  # 매매 돌입 가격
     exit_price = float(sell_trade['price'])  # 매매 종료 가격
@@ -48,9 +50,10 @@ def record_trade(exchange, symbol, buy_trade, sell_trade, start_seed, finish_see
     with open('binance.csv', 'a', encoding='utf-8-sig', newline='') as f:
         wr = csv.writer(f)
         wr.writerow([start_seed, entry_price, exit_price, pnl, total_fee, net_profit, finish_seed, entry_time.strftime('%Y-%m-%d %H:%M:%S'), exit_time.strftime('%Y-%m-%d %H:%M:%S'), result, 75])
-        
+
+#첫 시작때 csv 파일을 만들고 시작하기위한 함수     
 def initialize_csv(exchange, symbol):
-    trades = exchange.fetch_my_trades(symbol, since=None, limit=4)  # 최근 4개의 거래 히스토리 가져오기
+    trades = exchange.fetch_my_trades(symbol, since=None, limit=100)  # 최근 100개의 거래 히스토리 가져오기
     with open('binance.csv', 'w', encoding='utf-8-sig', newline='') as f:
         wr = csv.writer(f)
         wr.writerow(['Start Seed', 'Entry Price', 'Exit Price', 'Profit/Loss', 'Fee', 'Net Profit', 'Finish Seed', 'Entry Time', 'Exit Time', 'Result', 'Leverage'])

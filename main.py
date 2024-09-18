@@ -31,7 +31,7 @@ def run():
     fee_rate = 0.0005 # taker 수수료율
     
     sl_multiplier = 0.15 #손절 15%라인
-    tp_multiplier = 0.25 #수익 25%라인
+    tp_multiplier = 0.30 #수익 30%라인
     rsi_threshold = 4 #포지션 잡을 RSI 기준값
     
     if read_last_csv_entry() is None:
@@ -69,7 +69,7 @@ def run():
 
         #내용들이 정리 되면 거래 내역을 
         if position_open and not is_position_open(binance, symbol) and not result_recorded:
-            trades = binance.fetch_my_trades(symbol, since=None, limit=20) #가장 최근 거래 기록 2개(buy,sell 한쌍) 가져오기
+            trades = binance.fetch_my_trades(symbol, since=None, limit=2) #가장 최근 거래 기록 2개(buy,sell 한쌍) 가져오기
             
             for i in range(len(trades) - 1, 0, -1):
                 if trades[i]['side'] == 'sell' and trades[i - 1]['side'] == 'buy' and trades[i]['order'] != trades[i - 1]['order']:
